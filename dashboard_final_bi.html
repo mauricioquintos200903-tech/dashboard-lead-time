@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Lead Time - REY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gold: #B8860B;
+            --dark-gold: #8B6914;
+            --bg-dark: #1a1a1a;
+            --bg-medium: #2a2a2a;
+            --text-light: #fff;
+            --text-dark: #333;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+            color: var(--text-light);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: var(--text-light);
+            padding: 0.8rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--bg-dark);
+            letter-spacing: 2px;
+        }
+
+        .header-title {
+            border-left: 3px solid var(--primary-gold);
+            padding-left: 1.5rem;
+        }
+
+        .header-title h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            letter-spacing: 1px;
+        }
+
+        .header-title p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        .btn-update {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%);
+            color: var(--text-light);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);
+        }
+
+        .btn-update:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(184, 134, 11, 0.5);
+        }
+
+        .btn-update:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--text-light);
+            border-radius: 16px;
+            padding: 1.8rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-gold), var(--dark-gold));
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .kpi-card.highlight {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%);
+            color: var(--text-light);
+        }
+
+        .kpi-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .kpi-value {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            min-height: 3.5rem;
+        }
+
+        .kpi-subtitle {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .filters-section {
+            background: var(--text-light);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .filters-header h2 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .btn-reset {
+            background: transparent;
+            border: 2px solid var(--primary-gold);
+            color: var(--primary-gold);
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-reset:hover {
+            background: var(--primary-gold);
+            color: var(--text-light);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group select {
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            cursor: pointer;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary-gold);
+            box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.1);
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--text-light);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-card h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-dark);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(184, 134, 11, 0.3);
+            border-top-color: var(--primary-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            .kpi-value {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div id="loadingText">Cargando datos...</div>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">REY</div>
+            <div class="header-title">
+                <h1>INDICADOR DE LEAD TIME</h1>
+                <p>Dashboard Interactivo - Datos del BI</p>
+            </div>
+        </div>
+        <div>
+            <button class="btn-update" onclick="reloadData()" id="btnUpdate">
+                🔄 ACTUALIZAR DATOS
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="kpi-section">
+            <div class="kpi-card highlight">
+                <div class="kpi-title">LT Promedio</div>
+                <div class="kpi-value" id="kpiLTPromedio">--</div>
+                <div class="kpi-subtitle">días</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Total de Pedidos</div>
+                <div class="kpi-value" id="kpiTotalPedidos">--</div>
+                <div class="kpi-subtitle">DISTINCTCOUNT(CLAVE_LT)</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">% Completos</div>
+                <div class="kpi-value" id="kpiCompletos">--</div>
+                <div class="kpi-subtitle">de pedidos únicos</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">% Parciales</div>
+                <div class="kpi-value" id="kpiParciales">--</div>
+                <div class="kpi-subtitle">de pedidos únicos</div>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <div class="filters-header">
+                <h2>⚙️ Filtros de Análisis</h2>
+                <button class="btn-reset" onclick="resetFilters()">Limpiar Filtros</button>
+            </div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Año</label>
+                    <select id="filterAno" onchange="applyFilters()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Vendedor</label>
+                    <select id="filterVende" onchange="applyFilters()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Cliente</label>
+                    <select id="filterCliente" onchange="applyFilters()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Jerarquía</label>
+                    <select id="filterJerarquia" onchange="applyFilters()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Tipo Reposición</label>
+                    <select id="filterTipoRep" onchange="applyFilters()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Almacén</label>
+                    <select id="filterAlmacen" onchange="applyFilters()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-card">
+                <h3>📊 LT Promedio por Categoría</h3>
+                <div class="chart-container">
+                    <canvas id="chartCategoria"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>📈 Evolución Mensual LT</h3>
+                <div class="chart-container">
+                    <canvas id="chartMensual"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rawData = [];
+        let filteredData = [];
+        let chartCategoria, chartMensual;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadData();
+        });
+
+        async function loadData() {
+            showLoading('Cargando datos del BI...');
+            try {
+                const response = await fetch('DATOS_DEL_BI.xlsx');
+                if (!response.ok) throw new Error('No se pudo cargar DATOS_DEL_BI.xlsx');
+                
+                // Para leer Excel en navegador, usamos una librería
+                const data = await response.arrayBuffer();
+                
+                // Parsear con SheetJS (https://sheetjs.com/)
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+                script.onload = () => {
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(sheet);
+                    
+                    rawData = json;
+                    console.log(`✅ ${rawData.length} líneas cargadas`);
+                    
+                    initializeDashboard();
+                    hideLoading();
+                };
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showLoading(`Error: ${error.message}`);
+            }
+        }
+
+        function initializeDashboard() {
+            filteredData = [...rawData];
+            populateFilters();
+            updateKPIs();
+            updateCharts();
+        }
+
+        function populateFilters() {
+            const years = [...new Set(rawData.map(d => d.Año).filter(Boolean))].sort();
+            const vendors = [...new Set(rawData.map(d => d.DSC_VENDE).filter(Boolean))].sort();
+            const clients = [...new Set(rawData.map(d => d.DSC_CLI_AGP_COM).filter(Boolean))].sort();
+            const hierarchies = [...new Set(rawData.map(d => d.DSC_JERARQUIA).filter(Boolean))].sort();
+            const tipoReps = [...new Set(rawData.map(d => d.COD_TIPO_REP).filter(Boolean))].sort();
+            const almacenes = [...new Set(rawData.map(d => d.COD_ALM).filter(Boolean))].sort();
+
+            populateSelect('filterAno', years.map(y => y.toString()));
+            populateSelect('filterVende', vendors);
+            populateSelect('filterCliente', clients);
+            populateSelect('filterJerarquia', hierarchies);
+            populateSelect('filterTipoRep', tipoReps);
+            populateSelect('filterAlmacen', almacenes);
+        }
+
+        function populateSelect(selectId, options) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Todos</option>';
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.textContent = option;
+                select.appendChild(opt);
+            });
+        }
+
+        function applyFilters() {
+            const filters = {
+                año: document.getElementById('filterAno').value,
+                vende: document.getElementById('filterVende').value,
+                cliente: document.getElementById('filterCliente').value,
+                jerarquia: document.getElementById('filterJerarquia').value,
+                tipoRep: document.getElementById('filterTipoRep').value,
+                almacen: document.getElementById('filterAlmacen').value
+            };
+
+            filteredData = rawData.filter(item => {
+                return (!filters.año || item.Año == filters.año) &&
+                       (!filters.vende || item.DSC_VENDE === filters.vende) &&
+                       (!filters.cliente || item.DSC_CLI_AGP_COM === filters.cliente) &&
+                       (!filters.jerarquia || item.DSC_JERARQUIA === filters.jerarquia) &&
+                       (!filters.tipoRep || item.COD_TIPO_REP === filters.tipoRep) &&
+                       (!filters.almacen || item.COD_ALM === filters.almacen);
+            });
+
+            updateKPIs();
+            updateCharts();
+        }
+
+        function resetFilters() {
+            document.querySelectorAll('select').forEach(sel => sel.value = '');
+            applyFilters();
+        }
+
+        function updateKPIs() {
+            if (filteredData.length === 0) {
+                document.getElementById('kpiLTPromedio').textContent = '--';
+                document.getElementById('kpiTotalPedidos').textContent = '--';
+                document.getElementById('kpiCompletos').textContent = '--';
+                document.getElementById('kpiParciales').textContent = '--';
+                return;
+            }
+
+            // LT Promedio = AVERAGE(LEAD_TIME_DIAS)
+            const leadTimes = filteredData.map(d => parseFloat(d.LEAD_TIME_DIAS)).filter(d => !isNaN(d));
+            if (leadTimes.length > 0) {
+                const promedio = leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length;
+                document.getElementById('kpiLTPromedio').textContent = promedio.toFixed(2);
+            }
+
+            // Total Pedidos = DISTINCTCOUNT(CLAVE_LT)
+            const uniqueClaves = [...new Set(filteredData.map(d => d.CLAVE_LT))];
+            const totalPedidos = uniqueClaves.length;
+            document.getElementById('kpiTotalPedidos').textContent = totalPedidos.toLocaleString();
+
+            // % Completos y % Parciales = DISTINCTCOUNT por tipo / DISTINCTCOUNT total
+            const completosUnicos = new Set(
+                filteredData
+                    .filter(d => d.TIPO_ATENCION === 'COMPLETA')
+                    .map(d => d.CLAVE_LT)
+            ).size;
+            
+            const parcialesUnicos = new Set(
+                filteredData
+                    .filter(d => d.TIPO_ATENCION === 'PARCIAL')
+                    .map(d => d.CLAVE_LT)
+            ).size;
+            
+            const pctCompletos = (completosUnicos / totalPedidos * 100);
+            const pctParciales = (parcialesUnicos / totalPedidos * 100);
+            
+            document.getElementById('kpiCompletos').textContent = pctCompletos.toFixed(1) + '%';
+            document.getElementById('kpiParciales').textContent = pctParciales.toFixed(1) + '%';
+        }
+
+        function updateCharts() {
+            updateChartCategoria();
+            updateChartMensual();
+        }
+
+        function updateChartCategoria() {
+            const ctx = document.getElementById('chartCategoria').getContext('2d');
+            const groupedData = {};
+            filteredData.forEach(item => {
+                const key = item.DSC_JERARQUIA || 'Sin categoría';
+                if (!groupedData[key]) groupedData[key] = [];
+                const lt = parseFloat(item.LEAD_TIME_DIAS);
+                if (!isNaN(lt)) groupedData[key].push(lt);
+            });
+
+            const labels = [], data = [];
+            Object.entries(groupedData).forEach(([key, values]) => {
+                if (values.length > 0) {
+                    labels.push(key);
+                    data.push(values.reduce((a, b) => a + b, 0) / values.length);
+                }
+            });
+
+            const combined = labels.map((label, i) => ({ label, value: data[i] }));
+            combined.sort((a, b) => b.value - a.value);
+            const top10Labels = combined.slice(0, 10).map(c => c.label);
+            const top10Data = combined.slice(0, 10).map(c => c.value);
+
+            if (chartCategoria) chartCategoria.destroy();
+            chartCategoria = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: top10Labels,
+                    datasets: [{
+                        label: 'LT Promedio (días)',
+                        data: top10Data,
+                        backgroundColor: 'rgba(184, 134, 11, 0.8)',
+                        borderColor: 'rgba(139, 105, 20, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { ticks: { maxRotation: 45, minRotation: 45 } }
+                    }
+                }
+            });
+        }
+
+        function updateChartMensual() {
+            const ctx = document.getElementById('chartMensual').getContext('2d');
+            const monthlyData = {};
+            filteredData.forEach(item => {
+                if (item.Mes && item.Año) {
+                    const key = `${item.Año}-${String(item.Mes).padStart(2, '0')}`;
+                    if (!monthlyData[key]) monthlyData[key] = [];
+                    const lt = parseFloat(item.LEAD_TIME_DIAS);
+                    if (!isNaN(lt)) monthlyData[key].push(lt);
+                }
+            });
+
+            const labels = [], promedios = [], medianas = [];
+            Object.keys(monthlyData).sort().forEach(key => {
+                const values = monthlyData[key];
+                if (values.length > 0) {
+                    labels.push(key);
+                    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                    promedios.push(avg);
+                    const sorted = [...values].sort((a, b) => a - b);
+                    const middle = Math.floor(sorted.length / 2);
+                    const median = sorted.length % 2 === 0 
+                        ? (sorted[middle - 1] + sorted[middle]) / 2 
+                        : sorted[middle];
+                    medianas.push(median);
+                }
+            });
+
+            if (chartMensual) chartMensual.destroy();
+            chartMensual = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'LT Promedio',
+                            data: promedios,
+                            borderColor: '#1e40af',
+                            backgroundColor: 'rgba(30, 64, 175, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#1e40af',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'LT Mediana',
+                            data: medianas,
+                            borderColor: '#dc2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#dc2626',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { usePointStyle: true, padding: 15 }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { ticks: { maxRotation: 45, minRotation: 45 } }
+                    }
+                }
+            });
+        }
+
+        function showLoading(text) {
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('loadingText').textContent = text;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        function reloadData() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
